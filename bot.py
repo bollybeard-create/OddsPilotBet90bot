@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 from dotenv import load_dotenv
@@ -18,11 +19,23 @@ logger = logging.getLogger(__name__)
 # Config
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-openai.api_key = OPENAI_API_KEY
+
+if not TELEGRAM_TOKEN:
+    logger.error("❌ TELEGRAM_TOKEN not set!")
+    sys.exit(1)
+
+if OPENAI_API_KEY:
+    openai.api_key = OPENAI_API_KEY
+    logger.info("✅ OpenAI API key loaded")
+else:
+    logger.warning("⚠️ OPENAI_API_KEY not set! Using mock responses.")
 
 # AI Service Functions
 async def get_ai_response(prompt, context_text=""):
     """Get response from OpenAI"""
+    if not OPENAI_API_KEY:
+        return None
+    
     try:
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
@@ -312,33 +325,37 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Main
 def main():
-    if not TELEGRAM_TOKEN:
-        logger.error("TELEGRAM_TOKEN not set!")
-        return
-    
-    if not OPENAI_API_KEY:
-        logger.warning("OPENAI_API_KEY not set! Using mock responses.")
-    
-    app = Application.builder().token(TELEGRAM_TOKEN).build()
-    
-    # Add command handlers
-    app.add_handler(CommandHandler("start", start_command))
-    app.add_handler(CommandHandler("odds", odds_command))
-    app.add_handler(CommandHandler("bet", bet_command))
-    app.add_handler(CommandHandler("insights", insights_command))
-    app.add_handler(CommandHandler("predict", predict_command))
-    app.add_handler(CommandHandler("tips", tips_command))
-    app.add_handler(CommandHandler("settings", settings_command))
-    
-    # Add callback and message handlers
-    app.add_handler(CallbackQueryHandler(handle_callback))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
-    
-    # Add error handler
-    app.add_error_handler(error_handler)
-    
-    logger.info("🚀 OddsPilotBet90 bot started successfully!")
-    app.run_polling()
+    try:
+        # Create application
+        app = Application.builder().token(TELEGRAM_TOKEN).build()
+        
+        # Add command handlers
+        app.add_handler(CommandHandler("start", start_command))
+        app.add_handler(CommandHandler("odds", odds_command))
+        app.add_handler(CommandHandler("bet", bet_command))
+        app.add_handler(CommandHandler("insights", insights_command))
+        app.add_handler(CommandHandler("predict", predict_command))
+        app.add_handler(CommandHandler("tips", tips_command))
+        app.add_handler(CommandHandler("settings", settings_command))
+        
+        # Add callback and message handlers
+        app.add_handler(CallbackQueryHandler(handle_callback))
+        app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
+        
+        # Add error handler
+        app.add_error_handler(error_handler)
+        
+        # Remove webhook to avoid conflicts
+        app.bot.delete_webhook(drop_pending_updates=True)
+        
+        logger.info("🚀 OddsPilotBet90 bot started successfully!")
+        
+        # Start the bot with a timeout
+        app.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
+        
+    except Exception as e:
+        logger.error(f"Failed to start bot: {e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
