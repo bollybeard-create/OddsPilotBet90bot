@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 from dotenv import load_dotenv
@@ -79,13 +80,13 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Odds Command
 async def odds_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("⏳ Generating AI odds analysis...")
+    message = await update.message.reply_text("⏳ Generating AI odds analysis...")
     
     prompt = "Generate realistic betting odds for today's top sports matches. Include moneyline, spread, and over/under for 3 different sports like soccer, basketball, and tennis."
     response = await get_ai_response(prompt)
     
     if response:
-        await update.message.reply_text(f"📊 **AI Betting Odds**\n\n{response}", parse_mode='Markdown')
+        await message.edit_text(f"📊 **AI Betting Odds**\n\n{response}", parse_mode='Markdown')
     else:
         mock_odds = (
             "📊 **Sample Odds**\n\n"
@@ -98,17 +99,17 @@ async def odds_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "🎾 **Tennis:**\n"
             "• Player A vs Player B: Player A -120 | Player B +100"
         )
-        await update.message.reply_text(mock_odds, parse_mode='Markdown')
+        await message.edit_text(mock_odds, parse_mode='Markdown')
 
 # Bet Command
 async def bet_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("⏳ Getting smart betting advice...")
+    message = await update.message.reply_text("⏳ Getting smart betting advice...")
     
     prompt = "Provide smart betting advice including bankroll management, value betting tips, and common mistakes to avoid."
     response = await get_ai_response(prompt)
     
     if response:
-        await update.message.reply_text(f"🎯 **Betting Advice**\n\n{response}", parse_mode='Markdown')
+        await message.edit_text(f"🎯 **Betting Advice**\n\n{response}", parse_mode='Markdown')
     else:
         mock_advice = (
             "🎯 **Smart Betting Tips**\n\n"
@@ -126,17 +127,17 @@ async def bet_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "   • Stick to your strategy\n\n"
             "⚠️ **Always bet responsibly!**"
         )
-        await update.message.reply_text(mock_advice, parse_mode='Markdown')
+        await message.edit_text(mock_advice, parse_mode='Markdown')
 
 # Insights Command
 async def insights_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("⏳ Generating AI insights...")
+    message = await update.message.reply_text("⏳ Generating AI insights...")
     
     prompt = "Provide detailed sports betting insights including team performance analysis, market trends, and key factors to consider."
     response = await get_ai_response(prompt)
     
     if response:
-        await update.message.reply_text(f"🧠 **AI Insights**\n\n{response}", parse_mode='Markdown')
+        await message.edit_text(f"🧠 **AI Insights**\n\n{response}", parse_mode='Markdown')
     else:
         mock_insights = (
             "🧠 **Key Insights**\n\n"
@@ -151,17 +152,17 @@ async def insights_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "💡 **Pro Tip:**\n"
             "Look for value where public opinion differs from data"
         )
-        await update.message.reply_text(mock_insights, parse_mode='Markdown')
+        await message.edit_text(mock_insights, parse_mode='Markdown')
 
 # Predict Command
 async def predict_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("⏳ Making AI predictions...")
+    message = await update.message.reply_text("⏳ Making AI predictions...")
     
     prompt = "Predict the outcomes of today's major sports matches. Include confidence levels and reasoning for each prediction."
     response = await get_ai_response(prompt)
     
     if response:
-        await update.message.reply_text(f"🔮 **Match Predictions**\n\n{response}", parse_mode='Markdown')
+        await message.edit_text(f"🔮 **Match Predictions**\n\n{response}", parse_mode='Markdown')
     else:
         mock_predictions = (
             "🔮 **Today's Predictions**\n\n"
@@ -177,17 +178,17 @@ async def predict_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "📊 **Confidence Scale:** 0-100%\n"
             "⚠️ Predictions are AI-generated, not financial advice"
         )
-        await update.message.reply_text(mock_predictions, parse_mode='Markdown')
+        await message.edit_text(mock_predictions, parse_mode='Markdown')
 
 # Tips Command
 async def tips_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("⏳ Generating daily tips...")
+    message = await update.message.reply_text("⏳ Generating daily tips...")
     
     prompt = "Provide daily betting tips including tip of the day, strategic advice, and what to watch for in today's games."
     response = await get_ai_response(prompt)
     
     if response:
-        await update.message.reply_text(f"💡 **Daily Tips**\n\n{response}", parse_mode='Markdown')
+        await message.edit_text(f"💡 **Daily Tips**\n\n{response}", parse_mode='Markdown')
     else:
         mock_tips = (
             "💡 **Tip of the Day**\n\n"
@@ -205,7 +206,7 @@ async def tips_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "• Trust your research\n"
             "• Don't chase losses"
         )
-        await update.message.reply_text(mock_tips, parse_mode='Markdown')
+        await message.edit_text(mock_tips, parse_mode='Markdown')
 
 # Settings Command
 async def settings_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -281,12 +282,12 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.lower()
     
     if " vs " in text:
-        await update.message.reply_text(f"⏳ Analyzing {text}...")
+        message = await update.message.reply_text(f"⏳ Analyzing {text}...")
         prompt = f"Analyze the matchup between {text}. Provide predictions, key factors, and who you think will win."
         response = await get_ai_response(prompt, text)
         
         if response:
-            await update.message.reply_text(f"📊 **Match Analysis**\n\n{response}", parse_mode='Markdown')
+            await message.edit_text(f"📊 **Match Analysis**\n\n{response}", parse_mode='Markdown')
         else:
             mock_analysis = (
                 f"📊 **Analysis for {text}**\n\n"
@@ -300,7 +301,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "💡 **Tip:**\n"
                 "Use /predict for detailed predictions!"
             )
-            await update.message.reply_text(mock_analysis, parse_mode='Markdown')
+            await message.edit_text(mock_analysis, parse_mode='Markdown')
     else:
         await update.message.reply_text(
             "🤖 **I'm your betting assistant!**\n\n"
@@ -345,13 +346,10 @@ def main():
         # Add error handler
         app.add_error_handler(error_handler)
         
-        # Remove webhook to avoid conflicts
-        app.bot.delete_webhook(drop_pending_updates=True)
-        
         logger.info("🚀 OddsPilotBet90 bot started successfully!")
         
-        # Start the bot with a timeout
-        app.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
+        # Start the bot
+        app.run_polling(drop_pending_updates=True)
         
     except Exception as e:
         logger.error(f"Failed to start bot: {e}")
